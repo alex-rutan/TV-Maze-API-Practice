@@ -1,6 +1,7 @@
 "use strict";
 
 const $showsList = $("#showsList");
+const $episodesList = $("#episodesList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 const DEFAULT_IMAGE = "https://static.tvmaze.com/images/no-img/no-img-portrait-text.png";
@@ -62,7 +63,7 @@ async function searchForShowAndDisplay() {
   const term = $("#searchForm-term").val();
   const shows = await getShowsByTerm(term);
 
-  $episodesArea.hide();
+  // $episodesArea.hide();
   populateShows(shows);
 }
 
@@ -76,8 +77,39 @@ $searchForm.on("submit", async function (evt) {
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow(id) { 
+  let response = await axios.get(`${TVMAZE_BASE_URL}/shows/${id}/episodes`);
+  return response.data.map(function (episode) {
+    return {
+      id: episode.id,
+      name: episode.name,
+      season: episode.season,
+      number: episode.number 
+    }
+  });
+}
+
 
 /** Write a clear docstring for this function... */
 
-// function populateEpisodes(episodes) { }
+function populateEpisodes(episodes) {
+  $episodesList.empty();
+  $episodesArea.show();
+  for (let episode of episodes) {
+    const $episode = $(`<li> ${episode.name} (season ${episode.season} episode ${episode.number}) </li>`);
+    $episodesList.append($episode);
+    console.log("this is episode:", $episode);
+  }
+ }
+
+
+$showsList.on("click", ".Show-getEpisodes", async function (evt) {
+  let showId = $(evt.target.closest(".Show"));
+  await displayEpisodes(showId.data("show-id"));
+});
+
+
+async function displayEpisodes(id) {
+  const episodes = await getEpisodesOfShow(id);
+  populateEpisodes(episodes);
+}
